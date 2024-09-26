@@ -252,3 +252,63 @@ test('delete franchise', async () => {
 	const getUserFranchises = await DB.getUserFranchises(diner.id)
 	expect(getUserFranchises).toHaveLength(0)
 })
+
+test('add order', async () => {
+	const diner = await createDiner()
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+	const honeySerrano = await DB.addMenuItem({title: 'honey serrano', description: 'sweet and spicy', image: 'honey.png', price: 0.002}
+	)
+	const order = {
+		franchiseId: franchise.id,
+		storeId: store.id,
+		items: [{menuId: honeySerrano.id, description: honeySerrano.description, price: honeySerrano.price}]
+	}
+
+	const addedOrder = await DB.addDinerOrder(diner, order)
+
+	expect(addedOrder).toHaveProperty('id')
+	expect(addedOrder).toMatchObject(order)
+})
+
+test('get orders', async () => {
+	const diner = await createDiner()
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+	const honeySerrano = await DB.addMenuItem({title: 'honey serrano', description: 'sweet and spicy', image: 'honey.png', price: 0.002}
+	)
+	const order = {
+		franchiseId: franchise.id,
+		storeId: store.id,
+		items: [{menuId: honeySerrano.id, description: honeySerrano.description, price: honeySerrano.price}]
+	}
+	await DB.addDinerOrder(diner, order)
+	await DB.addDinerOrder(diner, order)
+
+	const dinerOrders = await DB.getOrders(diner)
+
+	expect(dinerOrders.dinerId).toBe(diner.id)
+	expect(dinerOrders.orders).toHaveLength(2)
+})
+
+test('get orders multiple pages', async () => {
+	const diner = await createDiner()
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+	const honeySerrano = await DB.addMenuItem({title: 'honey serrano', description: 'sweet and spicy', image: 'honey.png', price: 0.002}
+	)
+	const order = {
+		franchiseId: franchise.id,
+		storeId: store.id,
+		items: [{menuId: honeySerrano.id, description: honeySerrano.description, price: honeySerrano.price}]
+	}
+	await DB.addDinerOrder(diner, order)
+	await DB.addDinerOrder(diner, order)
+
+	config.db.listPerPage = 1
+	const page1 = await DB.getOrders(diner, 1)
+	const page2 = await DB.getOrders(diner, 2)
+
+	expect(page1.orders).toHaveLength(1)
+	expect(page2.orders).toHaveLength(1)
+})
