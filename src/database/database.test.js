@@ -5,8 +5,12 @@ const config = require('../config')
 
 jest.setTimeout(5 * 60 * 1000)
 
+function randomString() {
+	return Math.random().toString(36).substring(2, 12)
+}
+
 async function createAdmin() {
-	const name = Math.random().toString(36).substring(2, 12)
+	const name = randomString()
   const newUser = { 
 		name,
 		email: name + '@admin.com',
@@ -22,7 +26,7 @@ async function createAdmin() {
 }
 
 async function createDiner() {
-	const name = Math.random().toString(36).substring(2, 12)
+	const name = randomString()
   const newUser = { 
 		name,
 		email: name + '@diner.com',
@@ -54,7 +58,7 @@ test('get menu', async () => {
 })
 
 test('add user', async () => {
-	const name = Math.random().toString(36).substring(2, 12)
+	const name = randomString()
   const newUser = { 
 		name,
 		email: name + '@diner.com',
@@ -85,7 +89,7 @@ test('get user 404', async () => {
 
 test('update user', async () => {
 	const {email, password, ...diner} = await createDiner()
-	const newEmail = Math.random().toString(36).substring(2, 12) + "@diner.com"
+	const newEmail = randomString() + "@diner.com"
 	const newPassword = 'superdupersecure'
 
 	const updateRes = await DB.updateUser(diner.id, newEmail, newPassword)
@@ -117,7 +121,7 @@ test('logout user', async () => {
 
 test('create franchise', async () => {
 	const diner = await createDiner()
-	const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: diner.email}]}
+	const franchise = {name: randomString(), admins: [{email: diner.email}]}
 
 	const newFranchise = await DB.createFranchise(franchise)
 	const franchisee = await DB.getUser(diner.email, diner.password)
@@ -128,7 +132,7 @@ test('create franchise', async () => {
 
 test('create franchise 404', async () => {
 	const diner = await createDiner()
-	const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: 'nouser@test.com'}]}
+	const franchise = {name: randomString(), admins: [{email: 'nouser@test.com'}]}
 
 	await expect(async () => await DB.createFranchise(franchise)).rejects.toThrow(StatusCodeError)
 	await expect(async () => await DB.createFranchise(franchise)).rejects.toThrow('unknown user for franchise admin')
@@ -136,10 +140,10 @@ test('create franchise 404', async () => {
 
 test('create franchise owner', async () => {
 	const franchiseOwner = await createDiner()
-	let franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: franchiseOwner.email}]}
+	let franchise = {name: randomString(), admins: [{email: franchiseOwner.email}]}
 	franchise = await DB.createFranchise(franchise)
 
-	const name = Math.random().toString(36).substring(2, 12)
+	const name = randomString()
   const newFranchiseAdmin = { 
 		name,
 		email: name + '@diner.com',
@@ -153,7 +157,7 @@ test('create franchise owner', async () => {
 
 test('get franchise', async () => {
 	const diner = await createDiner()
-	const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: diner.email}]}
+	const franchise = {name: randomString(), admins: [{email: diner.email}]}
 	const {id, ...rest} = await DB.createFranchise(franchise)
 
 	const newFranchise = await DB.getFranchise({id})
@@ -166,7 +170,7 @@ test('get franchises', async () => {
 	const diner = await createDiner()
 	let franchises = []
 	for (let i = 0; i < 3; i++) {
-		const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: diner.email}]}
+		const franchise = {name: randomString(), admins: [{email: diner.email}]}
 		const newFranchise = await DB.createFranchise(franchise)
 		franchises.push(newFranchise)
 	}
@@ -184,7 +188,7 @@ test('get franchises as admin', async () => {
 	const diner = await createDiner()
 	let franchises = []
 	for (let i = 0; i < 3; i++) {
-		const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: diner.email}]}
+		const franchise = {name: randomString(), admins: [{email: diner.email}]}
 		const newFranchise = await DB.createFranchise(franchise)
 		franchises.push(newFranchise)
 	}
@@ -200,11 +204,51 @@ test('get franchises as admin', async () => {
 
 test('get user franchises', async () => {
 	const diner = await createDiner()
-	const franchise = {name: Math.random().toString(36).substring(2, 12), admins: [{email: diner.email}]}
+	const franchise = {name: randomString(), admins: [{email: diner.email}]}
 	const newFranchise = await DB.createFranchise(franchise)
 
 	const userFranchises = await DB.getUserFranchises(diner.id)
 
 	expect(userFranchises).toHaveLength(1)
 	expect(userFranchises[0]).toMatchObject(newFranchise)
+})
+
+test('create store', async () => {
+	const diner = await createDiner()
+	const franchise = {name: randomString(), admins: [{email: diner.email}]}
+	const newFranchise = await DB.createFranchise(franchise)
+	const storeName = randomString()
+
+	const store = await DB.createStore(newFranchise.id, {name: storeName})
+	const getFranchise = await DB.getFranchise(newFranchise)
+
+	expect(store).toHaveProperty('id')
+	expect(store.franchiseId).toBe(newFranchise.id)
+	expect(store.name).toBe(storeName)
+	expect(getFranchise.stores).toHaveLength(1)
+	expect(getFranchise.stores[0]).toMatchObject({id: store.id, name: storeName})
+})
+
+test('delete store', async () => {
+	const diner = await createDiner()
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+	let getFranchise = await DB.getFranchise(franchise)
+	expect(getFranchise.stores).toHaveLength(1)
+
+	await DB.deleteStore(franchise.id, store.id)
+
+	getFranchise = await DB.getFranchise(franchise)
+	expect(getFranchise.stores).toHaveLength(0)
+})
+
+test('delete franchise', async () => {
+	const diner = await createDiner()
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+
+	await DB.deleteFranchise(franchise.id)
+
+	const getUserFranchises = await DB.getUserFranchises(diner.id)
+	expect(getUserFranchises).toHaveLength(0)
 })
