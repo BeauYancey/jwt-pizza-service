@@ -38,8 +38,15 @@ async function createDiner() {
   return newUser;
 }
 
+async function createStore(owner) {
+	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: owner.email}]})
+	const store = await DB.createStore(franchise.id, {name: randomString()})
+	return store
+}
+
 module.exports = {
 	createDiner,
 	createAdmin,
+	createStore,
 	randomString
 }
