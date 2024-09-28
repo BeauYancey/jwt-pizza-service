@@ -222,8 +222,7 @@ test('add order', async () => {
 	const diner = await createDiner()
 	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
 	const store = await DB.createStore(franchise.id, {name: randomString()})
-	const honeySerrano = await DB.addMenuItem({title: 'honey serrano', description: 'sweet and spicy', image: 'honey.png', price: 0.002}
-	)
+	const honeySerrano = await DB.addMenuItem({title: 'honey serrano', description: 'sweet and spicy', image: 'honey.png', price: 0.002})
 	const order = {
 		franchiseId: franchise.id,
 		storeId: store.id,
@@ -276,4 +275,25 @@ test('get orders multiple pages', async () => {
 
 	expect(page1.orders).toHaveLength(1)
 	expect(page2.orders).toHaveLength(1)
+})
+
+test('get token signature', () => {
+	const token = 'part1.part2.part3'
+	const signature = DB.getTokenSignature(token)
+
+	expect(signature).toBe('part3')
+})
+
+test('invalid token signature', () => {
+	const token = 'part1.part2'
+	const signature = DB.getTokenSignature(token)
+
+	expect(signature).toBe('')
+})
+
+test('get ID error', async () => {
+	const conn = await DB.getConnection()
+	conn.execute = async () => ([[]])
+
+	await expect(async () => await DB.getID(conn, 'key', 'value', 'table')).rejects.toThrow('No ID found')
 })
