@@ -15,20 +15,18 @@ beforeAll(async () => {
 
 test('register', async () => {
 	const registerRes = await request(app).post('/api/auth').send(testUser)
-	const { password, id, ...expectedUser } = { ...testUser, roles: [{ role: 'diner' }] };
 
 	expect(registerRes.status).toBe(200)
 	expect(registerRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/)
-	expect(registerRes.body.user).toMatchObject(expectedUser)
+	expect(registerRes.body.user).toMatchObject({email: testUser.email, name: testUser.name, roles: [{ role: 'diner'}]})
 })
 
 test('login', async () => {
   const loginRes = await request(app).put('/api/auth').send(testUser);
-	const { password, ...expectedUser } = { ...testUser, roles: [{ role: 'diner' }] };
 
   expect(loginRes.status).toBe(200);
   expect(loginRes.body.token).toMatch(/^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/);
-  expect(loginRes.body.user).toMatchObject(expectedUser);
+  expect(loginRes.body.user).toMatchObject({id: testUser.id, email: testUser.email, name: testUser.name, roles: [{ role: 'diner'}]});
 });
 
 test('update user', async () => {
@@ -36,10 +34,9 @@ test('update user', async () => {
 		.put(`/api/auth/${testUser.id}`).send({})
 		.set({Authorization: `Bearer ${testUserAuthToken}`})
 		.send({email: testUser.email, password: 'v3rysecurep@ssword'})
-	const { password, ...expectedUser } = { ...testUser, roles: [{ role: 'diner' }] };
 
 	expect(updateRes.status).toBe(200)
-	expect(updateRes.body).toMatchObject(expectedUser)
+	expect(updateRes.body).toMatchObject({id: testUser.id, email: testUser.email, name: testUser.name, roles: [{ role: 'diner'}]})
 	testUser.password = 'v3rysecurep@ssword'
 })
 
@@ -51,7 +48,7 @@ test('logout', async () => {
 })
 
 test('ivalid register', async () => {
-	const {name, ...badUser} = testUser
+	const badUser = {email: 'noname@diner.com', password: 'idonthaveaname'}
 	const registerRes = await request(app).post('/api/auth').send(badUser)
 
 	expect(registerRes.status).toBe(400)

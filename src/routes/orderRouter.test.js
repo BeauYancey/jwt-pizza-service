@@ -119,7 +119,7 @@ test('get orders', async () => {
 		.set({Authorization: `Bearer ${adminToken}`})
 		.send(honeySerrano)
 	const order = {franchiseId: store.franchiseId, storeId: store.id, items: [{menuId: menu.body[0].id, description: menu.body[0].description, price: menu.body[0].price}]}
-	const addRes = await request(app)
+	await request(app)
 		.post('/api/order')
 		.set({Authorization: `Bearer ${dinerToken}`})
 		.send(order)

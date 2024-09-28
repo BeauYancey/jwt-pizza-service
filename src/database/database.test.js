@@ -40,9 +40,7 @@ test('get user', async () => {
 	const diner = await createDiner()
 	const getRes = await DB.getUser(diner.email, diner.password)
 
-	const {password, ...noPass} = diner
-
-	expect(getRes).toMatchObject(noPass)
+	expect(getRes).toMatchObject({id: diner.id, name: diner.name, email: diner.email, roles: diner.roles})
 })
 
 test('get user 404', async () => {
@@ -53,14 +51,14 @@ test('get user 404', async () => {
 })
 
 test('update user', async () => {
-	const {email, password, ...diner} = await createDiner()
+	const diner = await createDiner()
 	const newEmail = randomString() + "@diner.com"
 	const newPassword = 'superdupersecure'
 
 	const updateRes = await DB.updateUser(diner.id, newEmail, newPassword)
 
 	expect(updateRes.email).toBe(newEmail)
-	expect(updateRes).toMatchObject(diner)
+	expect(updateRes).toMatchObject({id: diner.id, name: diner.name, email: newEmail, roles: diner.roles})
 })
 
 test('login user', async () => {
@@ -96,7 +94,6 @@ test('create franchise', async () => {
 })
 
 test('create franchise 404', async () => {
-	const diner = await createDiner()
 	const franchise = {name: randomString(), admins: [{email: 'nouser@test.com'}]}
 
 	await expect(async () => await DB.createFranchise(franchise)).rejects.toThrow(StatusCodeError)
@@ -123,7 +120,7 @@ test('create franchise owner', async () => {
 test('get franchise', async () => {
 	const diner = await createDiner()
 	const franchise = {name: randomString(), admins: [{email: diner.email}]}
-	const {id, ...rest} = await DB.createFranchise(franchise)
+	const {id} = await DB.createFranchise(franchise)
 
 	const newFranchise = await DB.getFranchise({id})
 
@@ -139,7 +136,7 @@ test('get franchises', async () => {
 		const newFranchise = await DB.createFranchise(franchise)
 		franchises.push(newFranchise)
 	}
-	diner.isRole = (role) => false
+	diner.isRole = () => false
 
 	const allFranchises = await DB.getFranchises(diner)
 
@@ -158,7 +155,7 @@ test('get franchises as admin', async () => {
 		franchises.push(newFranchise)
 	}
 	const admin = await createAdmin()
-	admin.isRole = (role) => true
+	admin.isRole = () => true
 
 	const allFranchises = await DB.getFranchises(admin)
 
@@ -210,7 +207,6 @@ test('delete store', async () => {
 test('delete franchise', async () => {
 	const diner = await createDiner()
 	const franchise = await DB.createFranchise({name: randomString(), admins: [{email: diner.email}]})
-	const store = await DB.createStore(franchise.id, {name: randomString()})
 
 	await DB.deleteFranchise(franchise.id)
 
