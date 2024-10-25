@@ -28,6 +28,26 @@
       "Default": "",
       "AllowedPattern": "^(?:vpc-[0-9a-f]{8,17}|)$",
       "ConstraintDescription": "VPC ID must begin with 'vpc-' and have a valid uuid"
+    },
+    "DBSnapshotIdentifier": {
+      "Type": "String",
+      "Description": "The snapshot identifier of the RDS database",
+      "Default": ""
+    },
+    "DBSubnetGroup": {
+      "Type": "String",
+      "Description": "The subnet group name for the RDS instance",
+      "Default": ""
+    },
+    "DBSecurityGroups": {
+      "Type": "CommaDelimitedList",
+      "Description": "A list of security group ids for the RDS instance",
+      "Default": ""
+    },
+    "DBPassword": {
+      "Type": "String",
+      "Description": "The password for the DB master user",
+      "Default": ""
     }
   },
   "Resources": {
@@ -149,6 +169,27 @@
           }
         ]
       }
+    },
+    "RDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Snapshot",
+      "Properties": {
+        "DBInstanceIdentifier": "jwt-pizza-service-db",
+        "DBName": "jwt-pizza-service-db",
+        "DBInstanceClass": "db.t4g.micro",
+        "DBSnapshotIdentifier": { "Ref": "DBSnapshotIdentifier" },
+        "DBSubnetGroupName": { "Ref": "DBSubnetGroup" },
+        "VPCSecurityGroups": { "Ref": "DBSecurityGroups" },
+        "MultiAZ": "false",
+        "AllocatedStorage": "20",
+        "PubliclyAccessible": "false",
+        "StorageType": "gp3",
+        "StorageThroughput": "125",
+        "MaxAllocatedStorage": "1000",
+        "StorageEncrypted": true,
+        "EnableIAMDatabaseAuthentication": true,
+        "MasterUserPassword": { "Ref": "DBPassword" }
+      }
     }
   },
   "Outputs": {
@@ -180,6 +221,12 @@
       "Description": "Load balancer target group",
       "Value": {
         "Ref": "TargetGroup"
+      }
+    },
+    "RDSInstance": {
+      "Description": "RDS Instance",
+      "Value": {
+        "Ref": "RDSInstance"
       }
     }
   }
