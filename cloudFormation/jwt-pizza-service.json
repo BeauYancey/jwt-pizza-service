@@ -175,7 +175,6 @@
       "DeletionPolicy": "Snapshot",
       "Properties": {
         "DBInstanceIdentifier": "jwt-pizza-service-db",
-        "DBName": "jwt-pizza-service-db",
         "DBInstanceClass": "db.t4g.micro",
         "DBSnapshotIdentifier": { "Ref": "DBSnapshotIdentifier" },
         "DBSubnetGroupName": { "Ref": "DBSubnetGroup" },
