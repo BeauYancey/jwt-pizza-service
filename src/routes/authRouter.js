@@ -59,6 +59,7 @@ async function setAuthUser(req, res, next) {
 // Authenticate token
 authRouter.authenticateToken = (req, res, next) => {
   if (!req.user) {
+    metrics.sendRequestLatency(req)
     return res.status(401).send({ message: 'unauthorized' });
   }
   next();
@@ -72,11 +73,13 @@ authRouter.post(
       const { name, email, password } = req.body;
       if (!name || !email || !password) {
         metrics.logAuthAttempt(false)
+        metrics.sendRequestLatency(req)
         return res.status(400).json({ message: 'name, email, and password are required' });
       }
       const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
       const auth = await setAuth(user);
       res.json({ user: user, token: auth });
+      metrics.sendRequestLatency(req)
       metrics.logAuthAttempt(true);
     }
     catch (e) {
@@ -95,6 +98,7 @@ authRouter.put(
       const user = await DB.getUser(email, password);
       const auth = await setAuth(user);
       res.json({ user: user, token: auth });
+      metrics.sendRequestLatency(req)
       metrics.logAuthAttempt(true)
     }
     catch (e) {
@@ -111,6 +115,7 @@ authRouter.delete(
   asyncHandler(async (req, res) => {
     await clearAuth(req);
     res.json({ message: 'logout successful' });
+    metrics.sendRequestLatency(req)
     metrics.logLogout()
   })
 );
@@ -124,11 +129,13 @@ authRouter.put(
     const userId = Number(req.params.userId);
     const user = req.user;
     if (user.id !== userId && !user.isRole(Role.Admin)) {
+      metrics.sendRequestLatency(req)
       return res.status(403).json({ message: 'unauthorized' });
     }
 
     const updatedUser = await DB.updateUser(userId, email, password);
     res.json(updatedUser);
+    metrics.sendRequestLatency(req)
   })
 );
 

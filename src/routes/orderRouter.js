@@ -3,6 +3,7 @@ const config = require('../config.js');
 const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
+const metrics = require('../metrics.js')
 
 const orderRouter = express.Router();
 
@@ -45,6 +46,7 @@ orderRouter.get(
   '/menu',
   asyncHandler(async (req, res) => {
     res.send(await DB.getMenu());
+    metrics.sendRequestLatency(req)
   })
 );
 
@@ -60,6 +62,7 @@ orderRouter.put(
     const addMenuItemReq = req.body;
     await DB.addMenuItem(addMenuItemReq);
     res.send(await DB.getMenu());
+    metrics.sendRequestLatency(req)
   })
 );
 
@@ -69,6 +72,7 @@ orderRouter.get(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     res.json(await DB.getOrders(req.user, req.query.page));
+    metrics.sendRequestLatency(req)
   })
 );
 
@@ -79,17 +83,23 @@ orderRouter.post(
   asyncHandler(async (req, res) => {
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
+    const startTime = performance.now();
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
+    const endTime = performance.now()
+    metrics.sendFactoryLatency(endTime-startTime)
     const j = await r.json();
     if (r.ok) {
+      metrics.logPizza(order.items.reduce((acc, item) => acc + item.price, 0))
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
+      metrics.logPizzaFailure()
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
     }
+    metrics.sendRequestLatency(req)
   })
 );
 

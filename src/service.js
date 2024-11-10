@@ -7,6 +7,10 @@ const version = require('./version.json');
 const config = require('./config.js');
 
 const app = express();
+app.use((req, res, next) => {
+  req.recvTime = performance.now();
+  next();
+})
 app.use(express.json());
 app.use(metrics.requestTracker.bind(metrics))
 app.use(setAuthUser);
@@ -30,6 +34,7 @@ apiRouter.use('/docs', (req, res) => {
     endpoints: [...authRouter.endpoints, ...orderRouter.endpoints, ...franchiseRouter.endpoints],
     config: { factory: config.factory.url, db: config.db.connection.host },
   });
+  metrics.sendRequestLatency(req)
 });
 
 app.get('/', (req, res) => {
@@ -37,17 +42,20 @@ app.get('/', (req, res) => {
     message: 'welcome to JWT Pizza',
     version: version.version,
   });
+  metrics.sendRequestLatency(req)
 });
 
 app.use('*', (req, res) => {
   res.status(404).json({
     message: 'unknown endpoint',
   });
+  metrics.sendRequestLatency(req)
 });
 
 // Default error handler for all exceptions and errors.
 app.use((err, req, res, next) => {
   res.status(err.statusCode ?? 500).json({ message: err.message, stack: err.stack });
+  metrics.sendRequestLatency(req)
   next();
 });
 

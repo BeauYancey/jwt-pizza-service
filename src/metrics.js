@@ -61,6 +61,16 @@ class Metrics {
 		this.pizzas.creationFailures++
 	}
 
+	sendRequestLatency(req) {
+		const metric = this.createMetricString('latency', [['type', 'request']], 'time', performance.now() - req.recvTime)
+		this.sendMetricToGrafana(metric)
+	}
+
+	sendFactoryLatency(time) {
+		const metric = this.createMetricString('latency', [['type', 'pizza_creation']], 'time', time)
+		this.sendMetricToGrafana(metric)
+	}
+
 	sendHTTPMetricsToGrafana() {
 		const allMetrics = this.createMetricString('request', [['method', 'all']], 'total', this.requests.all) + `\n` + 
 			this.createMetricString('request', [['method', 'get']], 'total', this.requests.get) + `\n` + 
