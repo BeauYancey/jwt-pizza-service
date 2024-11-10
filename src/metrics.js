@@ -23,9 +23,9 @@ class Metrics {
 		}
 		const timer = setInterval(() => {
 			this.sendHTTPMetricsToGrafana()
-			this.sendAuthMetricsToGrafana() // TODO
+			this.sendAuthMetricsToGrafana()
 			this.sendPizzaMetricsToGrafana() // TODO
-			this.sendMetricToGrafana(this.createMetricString('user', [], 'total', this.activeUsers)) // TODO
+			this.sendMetricToGrafana(this.createMetricString('user', [], 'total', this.activeUsers))
 			this.sendOSMetricsToGrafana()
 		}, 10000)
 		timer.unref()
@@ -99,7 +99,6 @@ class Metrics {
 	}
 
 	sendMetricToGrafana(metricString) {
-		console.log(`sending ${metricString}`)
 		fetch(`${config.metrics.url}`, {
       method: 'post',
       body: metricString,

@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const config = require('../config.js');
 const { asyncHandler } = require('../endpointHelper.js');
 const { DB, Role } = require('../database/database.js');
+const metrics = require('../metrics.js')
 
 const authRouter = express.Router();
 
@@ -67,24 +68,39 @@ authRouter.authenticateToken = (req, res, next) => {
 authRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'name, email, and password are required' });
+    try {
+      const { name, email, password } = req.body;
+      if (!name || !email || !password) {
+        metrics.logAuthAttempt(false)
+        return res.status(400).json({ message: 'name, email, and password are required' });
+      }
+      const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
+      const auth = await setAuth(user);
+      res.json({ user: user, token: auth });
+      metrics.logAuthAttempt(true);
     }
-    const user = await DB.addUser({ name, email, password, roles: [{ role: Role.Diner }] });
-    const auth = await setAuth(user);
-    res.json({ user: user, token: auth });
+    catch (e) {
+      metrics.logAuthAttempt(false);
+      throw e
+    }
   })
 );
 
 // login
 authRouter.put(
   '/',
-  asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    const user = await DB.getUser(email, password);
-    const auth = await setAuth(user);
-    res.json({ user: user, token: auth });
+  asyncHandler(async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
+      const user = await DB.getUser(email, password);
+      const auth = await setAuth(user);
+      res.json({ user: user, token: auth });
+      metrics.logAuthAttempt(true)
+    }
+    catch (e) {
+      metrics.logAuthAttempt(false);
+      throw e
+    }
   })
 );
 
@@ -95,6 +111,7 @@ authRouter.delete(
   asyncHandler(async (req, res) => {
     await clearAuth(req);
     res.json({ message: 'logout successful' });
+    metrics.logLogout()
   })
 );
 
