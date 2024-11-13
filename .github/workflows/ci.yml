@@ -63,7 +63,13 @@ jobs:
               userId: ${{ secrets.METRICS_USER_ID }},
               url: '${{ secrets.METRICS_URL }}',
               apiKey: '${{ secrets.METRICS_API_KEY }}',
-            },            
+            },
+            logging:    {
+              source: 'jwt-pizza-service',
+              userId: ${{ secrets.LOGGING_USER_ID }},
+              url: '${{ secrets.LOGGING_URL }}',
+              apiKey: '${{ secrets.LOGGING_API_KEY }}',
+            }       
           };" > src/config.js
 
       - name: Tests
@@ -162,3 +168,7 @@ jobs:
           service: jwt-pizza-service
           cluster: jwt-pizza-service
           wait-for-service-stability: false
+      
+      - name: Annotate deployment in Grafana
+        run: |
+          curl -s -X POST https://beauyancey.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"ee2kv60zqus5cf", "panelId":6, "text":"Version '"$version"' deployed" }'

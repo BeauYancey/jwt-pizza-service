@@ -4,6 +4,7 @@ const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const metrics = require('../metrics.js')
+const logger = require('../logger.js')
 
 const orderRouter = express.Router();
 
@@ -95,9 +96,11 @@ orderRouter.post(
     if (r.ok) {
       metrics.logPizza(order.items.reduce((acc, item) => acc + item.price, 0))
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
+      logger.log('info', 'factory', { diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order })
     } else {
       metrics.logPizzaFailure()
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
+      logger.log('warn', 'factory', { diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order })
     }
     metrics.sendRequestLatency(req)
   })
