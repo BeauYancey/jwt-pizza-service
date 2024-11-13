@@ -64,7 +64,7 @@ jobs:
               url: '${{ secrets.METRICS_URL }}',
               apiKey: '${{ secrets.METRICS_API_KEY }}',
             },
-            logging:    {
+            logs:    {
               source: 'jwt-pizza-service',
               userId: ${{ secrets.LOGGING_USER_ID }},
               url: '${{ secrets.LOGGING_URL }}',
@@ -172,3 +172,4 @@ jobs:
       - name: Annotate deployment in Grafana
         run: |
           curl -s -X POST https://beauyancey.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"ee2kv60zqus5cf", "panelId":6, "text":"Version '"$version"' deployed" }'
+          curl -s -X POST https://beauyancey.grafana.net/api/annotations -H "Authorization: Bearer ${{ secrets.GRAFANA_ACCESS_TOKEN }}" -H "Content-Type:application/json" -d '{"dashboardUID":"ee2kv60zqus5cf", "panelId":12, "text":"Version '"$version"' deployed" }'
