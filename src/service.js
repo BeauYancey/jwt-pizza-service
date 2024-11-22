@@ -24,6 +24,17 @@ app.use((req, res, next) => {
   next();
 });
 
+let chaos = false
+
+app.use((req, res, next) => {
+  if (chaos && !req.path.includes('chaos') && !(req.path.includes('auth') && req.method === 'DELETE')) {
+    if ((Math.random() * 100) > 33) {
+      return res.status(503).json({msg: 'chaos'})
+    }
+  }
+  next()
+})
+
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
 apiRouter.use('/auth', authRouter);
@@ -46,6 +57,13 @@ app.get('/', (req, res) => {
   });
   metrics.sendRequestLatency(req)
 });
+
+app.use((req, res, next) => {
+  chaos = req.chaos || false
+  if (!res.headersSent) {
+    next()
+  }
+})
 
 app.use('*', (req, res) => {
   res.status(404).json({

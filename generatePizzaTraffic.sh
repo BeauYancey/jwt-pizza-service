@@ -39,20 +39,33 @@ pid2=$!
 # Simulate a franchisee logging in every two mintues
 while true
 do
+  sleep 10;
   response=$(curl -s -X PUT $host/api/auth -d '{"email":"f@jwt.com", "password":"franchisee"}' -H 'Content-Type: application/json');
+  chaos=$(echo $response | jq -r '.msg')
+  if [ "$chaos" = "chaos" ]; then
+    echo "continuing, encountered chaos on franchisee login"
+    sleep 50;
+    continue
+  fi
   token=$(echo $response | jq -r '.token');
   echo "Login franchisee..."
-  sleep 110;
+  sleep 10;
   curl -s -X DELETE $host/api/auth -H "Authorization: Bearer $token" > /dev/null;
   echo "Logging out franchisee..."
-  sleep 10;
 done &
 pid3=$!
 
 # Simulate a diner ordering a pizza every 20 seconds
 while true
 do
+  sleep 30;
   response=$(curl -s -X PUT $host/api/auth -d '{"email":"d@jwt.com", "password":"diner"}' -H 'Content-Type: application/json');
+  chaos=$(echo $response | jq -r '.msg')
+  if [ "$chaos" = "chaos" ]; then
+    echo "continuing, encountered chaos on diner login";
+    sleep 20;
+    continue
+  fi
   token=$(echo $response | jq -r '.token');
   echo "Login diner..."
   curl -s -X POST $host/api/order -H 'Content-Type: application/json' -d '{"franchiseId": 1, "storeId":1, "items":[{ "menuId": 1, "description": "Veggie", "price": 0.05 }]}'  -H "Authorization: Bearer $token" > /dev/null;
@@ -60,7 +73,6 @@ do
   sleep 20;
   curl -s -X DELETE $host/api/auth -H "Authorization: Bearer $token" > /dev/null;
   echo "Logging out diner..."
-  sleep 30;
 done &
 pid4=$!
 
