@@ -2,11 +2,12 @@ const config = require('./config');
 
 class Logger {
 	httpLogger = (req, res, next) => {
+    const path = req.path
 		let send = res.send;
 		res.send = (resBody) => {
 			const logData = {
 				authorized: !!req.headers.authorization,
-        path: req.path,
+        path: path,
         method: req.method,
         statusCode: res.statusCode,
 				reqOrigin: req.get('Origin') || req.get('Host'),
