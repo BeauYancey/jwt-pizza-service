@@ -10,7 +10,7 @@ class Logger {
         path: path,
         method: req.method,
         statusCode: res.statusCode,
-				reqOrigin: req.get('Origin') || req.get('Host'),
+				reqOrigin: req.headers.origin || req.ip.split(':')[3] || 'unknown',
         reqBody: JSON.stringify(req.body),
         resBody: JSON.stringify(resBody),
       };
