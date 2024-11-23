@@ -73,7 +73,7 @@ authRouter.put(
       throw new StatusCodeError('unknown endpoint', 404);
     }
 
-    chaos = req.params.state === 'true';
+    const chaos = req.params.state === 'true';
     res.json({ chaos: chaos });
     req.chaos = chaos;
     next()
