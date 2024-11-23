@@ -74,9 +74,9 @@ jobs:
 
       - name: Tests
         run: |
-          sed -i "s/source: 'jwt-pizza-service'/source: 'jwt-pizza-service-test'/g" config.js
+          sed -i "s/source: 'jwt-pizza-service'/source: 'jwt-pizza-service-test'/g" src/config.js
           npm test
-          sed -i "s/source: 'jwt-pizza-service-test'/source: 'jwt-pizza-service'/g" config.js
+          sed -i "s/source: 'jwt-pizza-service-test'/source: 'jwt-pizza-service'/g" src/config.js
 
       - name: set version
         id: set_version
