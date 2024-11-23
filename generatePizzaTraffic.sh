@@ -49,7 +49,7 @@ do
   fi
   token=$(echo $response | jq -r '.token');
   echo "Login franchisee..."
-  sleep 10;
+  sleep 110;
   curl -s -X DELETE $host/api/auth -H "Authorization: Bearer $token" > /dev/null;
   echo "Logging out franchisee..."
 done &
